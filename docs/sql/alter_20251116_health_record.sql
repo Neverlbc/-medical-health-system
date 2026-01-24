@@ -1,0 +1,35 @@
+-- 健康档案相关表（如已存在请忽略）
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+CREATE TABLE IF NOT EXISTS `patient_record` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID(患者)',
+  `allergies` TEXT DEFAULT NULL COMMENT '过敏史',
+  `family_history` TEXT DEFAULT NULL COMMENT '家族病史',
+  `medical_history` TEXT DEFAULT NULL COMMENT '既往病史',
+  `medication_history` TEXT DEFAULT NULL COMMENT '用药史',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除(0:否 1:是)',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='健康档案';
+
+CREATE TABLE IF NOT EXISTS `record_attachment` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '附件ID',
+  `record_id` BIGINT NOT NULL COMMENT '档案ID',
+  `file_name` VARCHAR(255) NOT NULL COMMENT '文件名',
+  `file_url` VARCHAR(1024) NOT NULL COMMENT '文件URL',
+  `file_type` VARCHAR(50) DEFAULT NULL COMMENT '文件类型',
+  `file_size` BIGINT DEFAULT NULL COMMENT '文件大小',
+  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除(0:否 1:是)',
+  PRIMARY KEY (`id`),
+  KEY `idx_record_id` (`record_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='档案附件';
+
+SET FOREIGN_KEY_CHECKS = 1;
+
