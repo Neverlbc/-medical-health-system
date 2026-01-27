@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档详细介绍如何在智慧医疗健康管理系统中集成DeepSeek AI接口，实现智能问诊、报告解读、健康建议等功能。
+本文档详细介绍如何在智慧医疗健康管理系统中集成DeepSeek AI接口，实现智能问诊、健康建议等功能。
 
 ## DeepSeek API简介
 
@@ -56,7 +56,6 @@ deepseek:
   # 系统提示词模板
   system-prompts:
     symptom-analysis: "你是一位专业的医疗健康助手，擅长分析患者症状并给出专业建议。请注意，你的建议仅供参考，不能替代专业医生的诊断。"
-    report-analysis: "你是一位专业的医疗报告解读专家，能够详细解读体检报告和检验报告，并给出健康建议。"
     medication-guide: "你是一位专业的药师，熟悉各类药物的用法、用量、注意事项和禁忌。"
     health-knowledge: "你是一位健康科普专家，能够用通俗易懂的语言讲解医疗健康知识。"
 ```
@@ -255,32 +254,6 @@ public class AIService {
         return result;
     }
     
-    /**
-     * 报告解读
-     */
-    public ReportAnalysisResult analyzeReport(Map<String, Object> reportData) {
-        String systemPrompt = config.getSystemPrompts().get("report-analysis");
-        
-        // 将报告数据转换为文本
-        String reportText = formatReportData(reportData);
-        String userMessage = "请帮我解读以下体检报告：\n" + reportText;
-        
-        // 构建请求（报告解读不需要历史对话）
-        DeepSeekRequest request = deepSeekClient.buildRequest(systemPrompt, userMessage, null);
-        
-        // 调用API
-        DeepSeekResponse response = deepSeekClient.chat(request);
-        String aiResponse = response.getChoices().get(0).getMessage().getContent();
-        
-        // 构建结果
-        ReportAnalysisResult result = new ReportAnalysisResult();
-        result.setAiAnalysis(aiResponse);
-        result.setAiSuggestions(extractSuggestions(aiResponse));
-        result.setRiskLevel(assessRiskLevel(reportData, aiResponse));
-        result.setAbnormalItems(extractAbnormalItems(reportData));
-        
-        return result;
-    }
     
     /**
      * 用药指导
@@ -396,30 +369,7 @@ public class AIService {
         return sb.toString();
     }
     
-    /**
-     * 评估风险等级
-     */
-    private String assessRiskLevel(Map<String, Object> reportData, String aiResponse) {
-        // 简单实现：根据关键词判断
-        String response = aiResponse.toLowerCase();
-        
-        if (response.contains("严重") || response.contains("危险") || response.contains("异常明显")) {
-            return "HIGH";
-        } else if (response.contains("偏高") || response.contains("偏低") || response.contains("轻度")) {
-            return "MEDIUM";
-        } else {
-            return "LOW";
-        }
-    }
     
-    /**
-     * 提取异常项目
-     */
-    private List<AbnormalItem> extractAbnormalItems(Map<String, Object> reportData) {
-        // 这里需要根据实际的报告数据结构来实现
-        // 示例实现
-        return new ArrayList<>();
-    }
 }
 ```
 
@@ -469,30 +419,6 @@ public class AIConsultationController {
 }
 ```
 
-### 2. 智能报告解读
-
-```java
-@PostMapping("/{reportId}/analyze")
-public Result<ReportAnalysisVO> analyzeReport(@PathVariable Long reportId) {
-    // 获取报告数据
-    MedicalReport report = reportService.getById(reportId);
-    
-    // 解析报告数据
-    Map<String, Object> reportData = parseReportData(report);
-    
-    // AI分析
-    ReportAnalysisResult result = aiService.analyzeReport(reportData);
-    
-    // 保存分析结果
-    report.setAiAnalysis(result.getAiAnalysis());
-    report.setAiSuggestions(JSON.toJSONString(result.getAiSuggestions()));
-    reportService.updateById(report);
-    
-    // 构建响应
-    ReportAnalysisVO vo = BeanUtil.copyProperties(result, ReportAnalysisVO.class);
-    return Result.success(vo);
-}
-```
 
 ## 最佳实践
 

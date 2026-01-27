@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * DeepSeek响应模型
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Data

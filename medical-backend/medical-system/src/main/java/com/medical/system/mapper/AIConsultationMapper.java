@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * AI问诊记录Mapper
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Mapper

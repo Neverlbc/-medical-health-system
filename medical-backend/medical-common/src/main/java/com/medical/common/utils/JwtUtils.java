@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * JWT工具类
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Slf4j

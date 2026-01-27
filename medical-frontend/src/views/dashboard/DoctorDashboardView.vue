@@ -109,9 +109,9 @@
         <div class="quick-nav-panel">
           <div class="q-title">知识库入口</div>
           <div class="q-links">
-            <div class="q-link">临床操作手册</div>
-            <div class="q-link">药物配伍禁忌表</div>
-            <div class="q-link">医学影像调看指南</div>
+            <div class="q-link" @click="openDoc('clinical_manual.pdf')">临床操作手册</div>
+            <div class="q-link" @click="openDoc('medication_guide.pdf')">药物配伍禁忌表</div>
+            <div class="q-link" @click="openDoc('imaging_guide.pdf')">医学影像调看指南</div>
           </div>
         </div>
       </el-col>
@@ -140,6 +140,11 @@ onMounted(async () => {
     console.error('Failed to fetch overview stats', error);
   }
 });
+
+const openDoc = (filename: string) => {
+  const url = `/docs/${filename}`;
+  window.open(url, '_blank');
+};
 </script>
 
 <style scoped lang="scss">

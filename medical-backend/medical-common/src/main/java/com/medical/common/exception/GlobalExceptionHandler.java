@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * 全局异常处理器
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Slf4j

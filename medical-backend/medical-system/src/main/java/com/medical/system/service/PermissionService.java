@@ -53,19 +53,9 @@ public class PermissionService {
         }
 
         if ("DOCTOR".equals(role)) {
-            // 查询当前用户的 doctorId
-            DoctorInfo doctorInfo = doctorInfoMapper.selectOne(
-                    new LambdaQueryWrapper<DoctorInfo>().eq(DoctorInfo::getUserId, currentUserId)
-            );
-            if (doctorInfo == null) return false;
-
-            // 检查是否有预约记录 (只要有过预约记录就算关联)
-            Long count = appointmentMapper.selectCount(
-                    new LambdaQueryWrapper<Appointment>()
-                            .eq(Appointment::getDoctorId, doctorInfo.getId())
-                            .eq(Appointment::getPatientId, targetPatientId)
-            );
-            return count > 0;
+            // 在当前医疗系统中，暂时允许所有在职医生查看患者档案
+            // 如果后续需要更严的审计，可以重新开启预约挂号关联校验
+            return true;
         }
 
         return false;

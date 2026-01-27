@@ -7,7 +7,7 @@ import com.medical.system.vo.LoginVO;
 /**
  * 认证服务接口
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 public interface AuthService {

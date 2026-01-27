@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * 健康数据控制器
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-24
  */
 @Tag(name = "HealthData", description = "健康数据管理")

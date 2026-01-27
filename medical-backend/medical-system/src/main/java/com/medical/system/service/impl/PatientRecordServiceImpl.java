@@ -67,68 +67,16 @@ public class PatientRecordServiceImpl extends ServiceImpl<PatientRecordMapper, P
 
     @Override
     public IPage<PatientRecord> pageList(Page<?> page, String keyword, Long filterUserId, Long currentUserId, String currentRole) {
-        LambdaQueryWrapper<PatientRecord> wrapper = new LambdaQueryWrapper<>();
-        
         if ("PATIENT".equals(currentRole)) {
+            // 患者本人只能看到自己的
+            LambdaQueryWrapper<PatientRecord> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(PatientRecord::getUserId, currentUserId);
-        } else if ("DOCTOR".equals(currentRole)) {
-            // Doctor can only see patients they have appointments with
-            com.medical.system.entity.DoctorInfo doctorInfo = doctorInfoMapper.selectOne(
-                    new LambdaQueryWrapper<com.medical.system.entity.DoctorInfo>().eq(com.medical.system.entity.DoctorInfo::getUserId, currentUserId)
-            );
-            
-            if (doctorInfo != null) {
-                // Find all patients who have appointments with this doctor
-                java.util.List<com.medical.system.entity.Appointment> appointments = appointmentMapper.selectList(
-                        new LambdaQueryWrapper<com.medical.system.entity.Appointment>()
-                                .eq(com.medical.system.entity.Appointment::getDoctorId, doctorInfo.getId())
-                                .select(com.medical.system.entity.Appointment::getPatientId)
-                );
-                
-                if (appointments.isEmpty()) {
-                    // No patients, return empty page
-                    return new Page<>(page.getCurrent(), page.getSize());
-                }
-                
-                java.util.Set<Long> patientIds = appointments.stream()
-                        .map(com.medical.system.entity.Appointment::getPatientId)
-                        .collect(java.util.stream.Collectors.toSet());
-                
-                // Convert patientIds (from patient_info table) to userIds (from sys_user table)
-                java.util.List<com.medical.system.entity.PatientInfo> patients = patientInfoMapper.selectList(
-                        new LambdaQueryWrapper<com.medical.system.entity.PatientInfo>()
-                                .in(com.medical.system.entity.PatientInfo::getId, patientIds)
-                                .select(com.medical.system.entity.PatientInfo::getUserId)
-                );
-                
-                if (patients.isEmpty()) {
-                     return new Page<>(page.getCurrent(), page.getSize());
-                }
-                
-                java.util.Set<Long> userIds = patients.stream()
-                        .map(com.medical.system.entity.PatientInfo::getUserId)
-                        .collect(java.util.stream.Collectors.toSet());
-                
-                wrapper.in(PatientRecord::getUserId, userIds);
-            } else {
-                 return new Page<>(page.getCurrent(), page.getSize());
-            }
-            
-            if (StringUtils.hasText(keyword)) {
-                 wrapper.like(PatientRecord::getRemark, keyword);
-            }
-        } else {
-            // ADMIN or others
-            if (filterUserId != null) {
-                wrapper.eq(PatientRecord::getUserId, filterUserId);
-            }
-            if (StringUtils.hasText(keyword)) {
-                 wrapper.like(PatientRecord::getRemark, keyword);
-            }
+            wrapper.orderByDesc(PatientRecord::getCreateTime);
+            return page(new Page<>(page.getCurrent(), page.getSize()), wrapper);
         }
         
-        wrapper.orderByDesc(PatientRecord::getCreateTime);
+        // 管理员和医生：使用自定义的关联查询，展示所有患者及其档案状态
         Page<PatientRecord> recordPage = new Page<>(page.getCurrent(), page.getSize());
-        return page(recordPage, wrapper);
+        return baseMapper.selectPatientRecordsPage(recordPage, keyword, filterUserId);
     }
 }

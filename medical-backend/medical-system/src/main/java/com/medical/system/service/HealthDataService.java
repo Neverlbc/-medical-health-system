@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * 健康数据服务接口
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-24
  */
 public interface HealthDataService {

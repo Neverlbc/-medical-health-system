@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * MyBatis Plus配置
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Configuration

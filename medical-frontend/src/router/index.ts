@@ -44,6 +44,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '预约挂号', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] }
       },
       {
+        path: 'schedule-manage',
+        name: 'ScheduleManage',
+        component: () => import('@/views/appointment/ScheduleManageView.vue'),
+        meta: { title: '排班管理', roles: ['ADMIN'] }
+      },
+      {
         path: 'ai-consultation',
         name: 'AIConsultation',
         component: () => import('@/views/ai/AIConsultationView.vue'),

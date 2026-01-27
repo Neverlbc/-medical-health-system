@@ -573,14 +573,10 @@ GET /api/v1/record/list?pageNum=1&pageSize=10&keyword=高血压&userId=1001
 
 ---
 
-## 5. 医疗报告解读（Report）【计划中｜Iteration 03】
-- `POST /report/parse` 上传与解析
-- `GET /report/{id}` 获取解析结果
-- 结果可写入档案并导出
 
 ---
 
-## 6. 预约挂号（Appointment）【计划中｜Iteration 02】
+## 5. 预约挂号（Appointment）【已实现✅】
 - `GET /schedule/list` 排班查询
 - `POST /appointment` 创建预约（含冲突校验）
 - `POST /appointment/{id}/cancel` 取消预约
@@ -588,15 +584,8 @@ GET /api/v1/record/list?pageNum=1&pageSize=10&keyword=高血压&userId=1001
 
 ---
 
-## 7. 用药提醒（Medication）【计划中｜Iteration 02】
-- `POST /medication/plan` 新建用药计划
-- `GET /medication/plan/list` 计划列表
-- `GET /medication/reminder/list` 提醒记录
-- `POST /medication/record/{id}/take` 标记已服用
 
----
-
-## 8. 通知（Notification）【计划中】
+## 6. 通知（Notification）【计划中】
 - `GET /notification/list?type=&isRead=&pageNum=&pageSize=`
 - `POST /notification/{id}/read`
 - `POST /notification/read-all`
@@ -604,13 +593,13 @@ GET /api/v1/record/list?pageNum=1&pageSize=10&keyword=高血压&userId=1001
 
 ---
 
-## 9. 健康知识库（Knowledge）【计划中】
+## 7. 健康知识库（Knowledge）【计划中】
 - `GET /knowledge/list?category=&keyword=&pageNum=&pageSize=`
 - `GET /knowledge/{id}`
 
 ---
 
-## 10. 文件上传（File）【基础已存在，按需扩展】
+## 8. 文件上传（File）【基础已存在，按需扩展】
 - URL：`POST /file/upload`
 - Content-Type：`multipart/form-data`
 - 参数
@@ -645,9 +634,9 @@ ws://localhost:8080/ws/{userId}
 消息格式（示例）
 ```json
 {
-  "type": "MEDICATION_REMINDER",
-  "title": "用药提醒",
-  "content": "请于 21:00 服用 1 片 阿莫西林",
+  "type": "SYSTEM",
+  "title": "系统维护",
+  "content": "系统将于今晚22:00进行维护",
   "timestamp": 1699276800000
 }
 ```

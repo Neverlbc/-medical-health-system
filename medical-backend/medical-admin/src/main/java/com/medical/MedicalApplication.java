@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * 智慧医疗健康管理系统启动类
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @SpringBootApplication

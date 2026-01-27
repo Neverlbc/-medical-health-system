@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * AI问诊记录实体
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Data

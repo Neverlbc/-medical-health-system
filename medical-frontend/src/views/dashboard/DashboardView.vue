@@ -32,7 +32,6 @@ import * as echarts from 'echarts';
 
 const summaryCards = [
   { title: '今日问诊', value: 12, desc: 'AI 问诊成功次数' },
-  { title: '健康提醒', value: 4, desc: '待处理用药提醒' },
   { title: '预约待就诊', value: 6, desc: '本周预约待处理' },
   { title: '健康评分', value: '86', desc: '综合健康指数' }
 ];

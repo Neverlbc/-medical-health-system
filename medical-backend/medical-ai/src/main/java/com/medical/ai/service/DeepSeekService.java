@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * DeepSeek AI服务
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Slf4j

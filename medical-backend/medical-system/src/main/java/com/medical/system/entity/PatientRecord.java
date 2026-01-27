@@ -42,5 +42,13 @@ public class PatientRecord implements Serializable {
     /** 逻辑删除 */
     @TableLogic
     private Integer deleted;
+
+    // --- 扩展字段（非数据库字段） ---
+    @TableField(exist = false)
+    private String patientName;
+    @TableField(exist = false)
+    private Integer gender;
+    @TableField(exist = false)
+    private Integer age;
 }
 

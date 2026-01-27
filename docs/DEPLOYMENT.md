@@ -1,284 +1,109 @@
 # 部署文档
 
-本指南介绍环境准备、后端/前端部署、容器化与运维要点。建议先在测试环境完成部署演练，再上线生产。
+本指南介绍环境准备、后端/前端部署、容器化与运维要点。
 
-最后更新时间：2025-11-14
+最后更新时间：2026-01-27
 
-## 环境要求
+## 🌍 全球部署实践 (US Overseas Node)
 
-### 服务器建议
-- CPU：2 核及以上
-- 内存：4 GB 及以上（生产建议 ≥ 8 GB）
-- 磁盘：50 GB 及以上
-- 操作系统：Linux（CentOS 7+/Ubuntu 18.04+）或 Windows Server
+本项目已在阿里云美国节点（Ubuntu 22.04）完成生产级部署，以下为核心配置指南。
 
-### 软件环境
-- JDK 17（推荐）或兼容版本
-- Maven 3.8+
-- MySQL 8.0+
-- Redis 6.0+
-- Nginx 1.18+
-- Node.js 16+（前端构建使用）
+### 1. 服务器环境
+- **机型**：阿里云 ECS (US Silicon Valley)
+- **操作系统**：Ubuntu 22.04 LTS
+- **开放端口**：80 (HTTP), 443 (HTTPS), 3306 (MySQL), 8080 (Backend)
 
-## 部署步骤
+### 2. 后端部署 (Spring Boot)
 
-### 1. 数据库
-
-#### 1.1 安装 MySQL（示例）
-```bash
-# CentOS
-yum install -y mysql-server
-
-# Ubuntu
-apt-get update && apt-get install -y mysql-server
-```
-
-#### 1.2 创建数据库与用户
-```sql
--- 登录 MySQL 后执行
-CREATE DATABASE IF NOT EXISTS medical_health
-  DEFAULT CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-CREATE USER 'medical'@'%' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON medical_health.* TO 'medical'@'%';
-FLUSH PRIVILEGES;
-```
-
-#### 1.3 导入初始化脚本
-```bash
-mysql -u medical -p medical_health < docs/sql/medical_health.sql
-```
-
-### 2. Redis
-```bash
-# 安装与启动（Linux 示例）
-yum install -y redis || apt-get install -y redis
-systemctl enable redis
-systemctl start redis
-
-# 设置密码（按需）
-redis-cli
-CONFIG SET requirepass "your_redis_password"
-CONFIG REWRITE
-```
-
-### 3. 后端服务
-
-#### 3.1 打包
-```bash
-cd medical-backend
-mvn clean package -DskipTests
-# 产物位于 medical-admin/target/medical-admin.jar
-```
-
-#### 3.2 配置
-编辑（或通过环境变量注入）`application-prod.yml` 关键项示例：
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://your-server:3306/medical_health?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: medical
-    password: your_db_password
-  redis:
-    host: your-server
-    port: 6379
-    password: your_redis_password
-
-jwt:
-  secret: please-change-in-prod
-  expiration: 86400
-
-deepseek:
-  api-key: your_deepseek_api_key
-```
-
-（推荐用环境变量覆盖敏感信息，避免提交仓库）
-
-#### 3.3 启动
-```bash
-# 方式一：前台
-java -jar medical-admin/target/medical-admin.jar --spring.profiles.active=prod
-
-# 方式二：后台
-nohup java -jar medical-admin/target/medical-admin.jar --spring.profiles.active=prod > app.log 2>&1 &
-```
-
-#### 3.4 systemd 管理（可选）
-`/etc/systemd/system/medical-backend.service`：
+#### 2.1 Systemd 服务配置
+创建 `/etc/systemd/system/medical.service`：
 ```ini
 [Unit]
-Description=Medical Health Backend Service
-After=network.target
+Description=Medical Health System Backend
+After=network.target mysql.service redis.service
 
 [Service]
-Type=simple
 User=root
-WorkingDirectory=/opt/medical-backend
-ExecStart=/usr/bin/java -jar /opt/medical-backend/medical-admin.jar --spring.profiles.active=prod
-Restart=on-failure
+# 关键：指定 jar 包所在目录
+WorkingDirectory=/www/wwwroot/medical-backend
+# 运行命令，通过命令行参数注入敏感信息
+ExecStart=/usr/bin/java -jar medical-admin.jar --spring.datasource.password=您的数据库密码
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 ```
-执行：
+
+#### 2.2 管理命令
 ```bash
-systemctl daemon-reload
-systemctl enable medical-backend
-systemctl start medical-backend
+sudo systemctl daemon-reload
+sudo systemctl enable medical
+sudo systemctl start medical
+sudo systemctl status medical
 ```
 
-### 4. 前端
+### 3. 前端部署 (Vue 3 + Nginx)
 
-#### 4.1 构建
-```bash
-cd medical-frontend
-npm ci || npm install
-npm run build
-```
-构建产物默认在 `dist/`，可由 Nginx 托管。
-
-#### 4.2 Nginx 示例
-`/etc/nginx/conf.d/medical-frontend.conf`：
+#### 3.1 Nginx 核心配置
+文件路径：`/etc/nginx/sites-available/default`
 ```nginx
 server {
     listen 80;
-    server_name _;
+    server_name lbc-ai.top medical.lbc-ai.top;
 
-    root /opt/medical-frontend/dist;
+    # 这里的 root 必须指向包含 index.html 的 dist 文件夹
+    root /www/wwwroot/medical-frontend/dist;
     index index.html;
 
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # API 反向代理（如前后端不同域）
+    # API 反向代理
     location /api/ {
         proxy_pass http://127.0.0.1:8080/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
-重载：
+
+### 4. HTTPS 安全加固 (Certbot)
+
+使用 Let's Encrypt 自动签发证书：
 ```bash
-nginx -t && systemctl reload nginx
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx
 ```
+- 选择 **Redirect** 选项，强制将所有 HTTP 流量重定向到 HTTPS。
+- 证书会自动配置到上述 Nginx 文件中。
 
-### 5. 容器化（可选）
+### 5. 数据库远程访问 (Navicat)
 
-`docker-compose.yml`（示例）：
-```yaml
-version: "3.9"
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: medical-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: medical_health
-    ports: ["3306:3306"]
-    volumes:
-      - mysql-data:/var/lib/mysql
-    networks: [medical-network]
-
-  redis:
-    image: redis:6
-    container_name: medical-redis
-    ports: ["6379:6379"]
-    command: ["redis-server", "--appendonly", "yes"]
-    networks: [medical-network]
-
-  backend:
-    build: ./medical-backend
-    container_name: medical-backend
-    depends_on: [mysql, redis]
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      DB_URL: jdbc:mysql://mysql:3306/medical_health?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-      DB_USERNAME: root
-      DB_PASSWORD: root123
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD:
-      JWT_SECRET: please-change-in-prod
-    ports: ["8080:8080"]
-    networks: [medical-network]
-
-  frontend:
-    build: ./medical-frontend
-    container_name: medical-frontend
-    depends_on: [backend]
-    ports: ["80:80"]
-    networks: [medical-network]
-
-volumes:
-  mysql-data:
-
-networks:
-  medical-network:
-    driver: bridge
-```
-启动：
-```bash
-docker-compose up -d
-```
+为了安全地进行远程调试，需修改 MySQL 配置：
+1. 编辑 `/etc/mysql/mysql.conf.d/mysqld.cnf`，将 `bind-address` 改为 `0.0.0.0`。
+2. 在 MySQL 中为 root 用户开启远程权限：
+   ```sql
+   CREATE USER 'root'@'%' IDENTIFIED BY '您的密码';
+   GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+   FLUSH PRIVILEGES;
+   ```
+3. 开放服务器防火墙：`sudo ufw allow 3306`（或在阿里云安全组中放行）。
 
 ## 监控与维护
 
-### 日志
+### 日志查看
+- **后端日志**：`sudo journalctl -u medical.service -f`
+- **Nginx 访问日志**：`tail -f /var/log/nginx/access.log`
+- **Nginx 错误日志**：`tail -f /var/log/nginx/error.log`
+
+### 自动续期
+Certbot 默认已配置 crontab 任务，可运行以下命令测试续期逻辑：
 ```bash
-# 后台运行日志
-tail -f app.log
-# 搜索错误
-grep "ERROR" app.log
+sudo certbot renew --dry-run
 ```
-
-### Spring Boot Actuator（建议）
-`application.yml`：
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,info
-  endpoint:
-    health:
-      show-details: always
-```
-访问：
-- 健康检查：http://your-server:8080/actuator/health
-- 指标：http://your-server:8080/actuator/metrics
-
-### 数据库备份（示例）
-```bash
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/backup/mysql"
-mkdir -p "$BACKUP_DIR"
-mysqldump -u medical -p'your_db_password' medical_health > "$BACKUP_DIR/medical_health_$DATE.sql"
-find "$BACKUP_DIR" -name "*.sql" -mtime +7 -delete
-```
-使用 `crontab -e`：
-```
-0 2 * * * /path/to/backup.sh
-```
-
-## 常见问题
-
-1) 端口占用  
-```bash
-netstat -tunlp | grep 8080   # Linux
-```
-
-2) 内存不足  
-```bash
-java -Xms512m -Xmx1024m -jar medical-admin.jar
-```
-
-3) 数据库连接失败  
-- 确认数据库/用户名/密码是否正确
-- 检查防火墙与安全组
-- 校验 JDBC URL 与时区参数
 

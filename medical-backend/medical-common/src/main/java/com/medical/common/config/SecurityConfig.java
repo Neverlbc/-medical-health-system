@@ -19,7 +19,7 @@ import java.util.Arrays;
 /**
  * Spring Security配置
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Configuration

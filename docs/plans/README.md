@@ -4,8 +4,8 @@
 
 ## 迭代列表
 - Iteration 01：基础业务闭环（健康档案 MVP + 认证打磨 + 前端主框架） → `iteration-01.md`
-- Iteration 02：数据采集与提醒闭环（健康监测 + 用药提醒 + 预约 MVP + AI 咨询增强） → `iteration-02.md`
-- Iteration 03：AI 报告解读 + 质量与发布（端到端测试 + 性能安全 + 发布上线） → `iteration-03.md`
+- Iteration 02：数据采集与提醒闭环（健康监测 + 预约 MVP + AI 咨询增强） → `iteration-02.md`
+- Iteration 03：质量与发布（端到端测试 + 性能安全 + 发布上线） → `iteration-03.md`
 
 建议按计划执行，如需调整在计划文档中记录范围变更（Scope Change）。
 

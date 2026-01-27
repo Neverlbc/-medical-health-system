@@ -236,60 +236,8 @@
 
 ---
 
-### 9. 用药提醒表 (medication_reminder)
 
-患者用药提醒计划。
-
-| 字段名 | 类型 | 长度 | 允许空 | 主键 | 说明 |
-|--------|------|------|--------|------|------|
-| id | BIGINT | - | NO | PK | 提醒ID |
-| patient_id | BIGINT | - | NO | - | 患者ID(外键) |
-| medicine_name | VARCHAR | 100 | NO | - | 药品名称 |
-| dosage | VARCHAR | 50 | NO | - | 剂量 |
-| frequency | VARCHAR | 50 | NO | - | 频率(每日3次/每日2次) |
-| usage_method | VARCHAR | 100 | YES | - | 用法(饭前/饭后) |
-| start_date | DATE | - | NO | - | 开始日期 |
-| end_date | DATE | - | NO | - | 结束日期 |
-| reminder_times | VARCHAR | 100 | NO | - | 提醒时间(08:00,12:00,18:00) |
-| remark | VARCHAR | 200 | YES | - | 备注 |
-| status | TINYINT | - | NO | - | 状态(0:已停用 1:进行中 2:已完成) |
-| create_time | DATETIME | - | NO | - | 创建时间 |
-| update_time | DATETIME | - | NO | - | 更新时间 |
-
-**索引:**
-- PRIMARY KEY (`id`)
-- KEY `idx_patient_id` (`patient_id`)
-- KEY `idx_status` (`status`)
-- KEY `idx_date_range` (`start_date`, `end_date`)
-
----
-
-### 10. 用药记录表 (medication_record)
-
-患者实际用药记录。
-
-| 字段名 | 类型 | 长度 | 允许空 | 主键 | 说明 |
-|--------|------|------|--------|------|------|
-| id | BIGINT | - | NO | PK | 记录ID |
-| reminder_id | BIGINT | - | NO | - | 提醒ID(外键) |
-| patient_id | BIGINT | - | NO | - | 患者ID(外键) |
-| medicine_name | VARCHAR | 100 | NO | - | 药品名称 |
-| planned_time | DATETIME | - | NO | - | 计划用药时间 |
-| actual_time | DATETIME | - | YES | - | 实际用药时间 |
-| status | TINYINT | - | NO | - | 状态(0:未服用 1:已服用 2:已忽略) |
-| remark | VARCHAR | 200 | YES | - | 备注 |
-| create_time | DATETIME | - | NO | - | 创建时间 |
-
-**索引:**
-- PRIMARY KEY (`id`)
-- KEY `idx_reminder_id` (`reminder_id`)
-- KEY `idx_patient_id` (`patient_id`)
-- KEY `idx_planned_time` (`planned_time`)
-- KEY `idx_status` (`status`)
-
----
-
-### 11. 系统通知表 (system_notification)
+### 9. 系统通知表 (system_notification)
 
 系统消息通知。
 
@@ -313,7 +261,7 @@
 
 ---
 
-### 12. 健康知识库表 (health_knowledge)
+### 10. 健康知识库表 (health_knowledge)
 
 健康知识文章。
 
@@ -355,8 +303,6 @@
 6. **patient_info → appointment**: 一对多关系
 7. **doctor_info → appointment**: 一对多关系
 8. **doctor_info → doctor_schedule**: 一对多关系
-9. **patient_info → medication_reminder**: 一对多关系
-10. **medication_reminder → medication_record**: 一对多关系
 
 ## 数据字典补充说明
 
@@ -385,7 +331,6 @@
 ### 通知类型 (notification.type)
 - `SYSTEM`: 系统通知
 - `APPOINTMENT`: 预约通知
-- `MEDICATION`: 用药提醒
 - `REPORT`: 报告通知
 
 ---

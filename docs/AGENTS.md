@@ -5,7 +5,7 @@
 ## 项目结构与模块组成
 - medical-frontend：Vue 3 + TypeScript（Vite）
   - 目录：`src/api`、`src/router`、`src/store`、`src/views`、`src/styles`
-- medical-backend：Maven 多模块 Spring Boot（Java 17）
+- medical-backend：Maven 多模块 Spring Boot（Java 17 / JDK 17+）
   - medical-common：通用配置、异常、工具、统一返回
   - medical-system：核心业务（entity/mapper/service/controller）
   - medical-ai：AI 集成（DeepSeek）
@@ -30,7 +30,7 @@
   - 2 空格缩进；TS + Vue SFC；组件文件 `PascalCase.vue`（如 `DashboardView.vue`）
   - API 放在 `src/api/modules/*.ts`；Pinia Store 放在 `src/store/modules/*`
   - 已关闭规则：`@typescript-eslint/no-explicit-any`、`vue/multi-word-component-names`
-- 后端：Java 17，4 空格缩进，包名前缀 `com.medical...`
+- 后端：Java 17 / JDK 17+，4 空格缩进，包名前缀 `com.medical...`
   - 类名 `UpperCamelCase`；方法/字段 `lowerCamelCase`；常量 `UPPER_SNAKE_CASE`
   - 使用 Lombok；持久层使用 MyBatis-Plus
 
@@ -50,5 +50,5 @@
 - 前端设置 `VITE_APP_BASE_API`（见 `vite.config.ts` 代理）
 - 启动前先导入 `docs/sql/*.sql`，并确保 Redis 可用
 
-最后更新：2025-11-14
+最后更新：2026-01-27
 

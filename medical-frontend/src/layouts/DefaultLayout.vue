@@ -49,6 +49,10 @@
               <el-icon><Monitor /></el-icon>
               <span>统计工作台</span>
             </el-menu-item>
+            <el-menu-item v-if="role === 'ADMIN'" index="/schedule-manage">
+              <el-icon><Timer /></el-icon>
+              <span>排班管理</span>
+            </el-menu-item>
             <el-menu-item index="/patients">
               <el-icon><User /></el-icon>
               <span>患者名单</span>
@@ -126,7 +130,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/modules/auth';
 import { 
   Calendar, ChatDotRound, DataLine, Monitor, Document, 
-  User, CaretBottom, Bell, Setting, SwitchButton, UserFilled
+  User, CaretBottom, Bell, Setting, SwitchButton, UserFilled, Timer
 } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus';
 

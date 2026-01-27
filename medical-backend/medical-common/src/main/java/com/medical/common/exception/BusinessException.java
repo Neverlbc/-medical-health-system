@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 业务异常
  *
- * @author 刘柏城
+ * @author lbc
  * @date 2025-11-06
  */
 @Getter
