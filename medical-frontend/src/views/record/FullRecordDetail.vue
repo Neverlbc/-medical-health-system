@@ -346,4 +346,107 @@ onMounted(() => {
     }
   }
 }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .full-record {
+    padding: 0;
+  }
+  
+  .patient-info-card {
+    border-radius: 12px;
+    margin-bottom: 16px !important;
+    
+    :deep(.el-card__body) {
+      padding: 16px;
+    }
+  }
+  
+  .patient-header {
+    flex-direction: column;
+    gap: 16px;
+    
+    .avatar-area {
+      text-align: center;
+      
+      .el-avatar {
+        width: 48px !important;
+        height: 48px !important;
+      }
+    }
+    
+    .info-area {
+      text-align: center;
+      
+      .name-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        
+        .name { font-size: 18px; }
+      }
+      
+      .detail-row {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        
+        .label, .value {
+          margin-right: 0 !important;
+        }
+      }
+    }
+    
+    .action-area {
+      width: 100%;
+      
+      .el-button {
+        width: 100%;
+      }
+    }
+  }
+  
+  .record-tabs-card {
+    border-radius: 12px;
+    
+    :deep(.el-card__body) {
+      padding: 12px;
+    }
+    
+    :deep(.el-tabs__header) {
+      margin: 0 0 16px;
+      
+      .el-tabs__nav-scroll {
+        overflow-x: auto;
+      }
+      
+      .el-tabs__item {
+        padding: 0 12px;
+        font-size: 13px;
+      }
+    }
+  }
+  
+  .ai-result-panel {
+    border-radius: 12px;
+    
+    .result-header {
+      padding: 12px 16px;
+      
+      .title {
+        font-size: 14px;
+      }
+    }
+    
+    .result-content {
+      padding: 16px;
+      font-size: 13px;
+    }
+    
+    .result-footer {
+      padding: 10px 16px;
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
+}
 </style>

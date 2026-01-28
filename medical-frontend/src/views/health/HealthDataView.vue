@@ -975,4 +975,144 @@ const getUnit = (type: string) => {
 
 .mr-1 { margin-right: 4px; }
 .mr-2 { margin-right: 8px; }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .health-monitor-view {
+    padding: 0;
+  }
+  
+  .top-row {
+    flex-direction: column;
+    
+    :deep(.el-col) {
+      max-width: 100%;
+      flex: 0 0 100%;
+    }
+  }
+  
+  .trend-panel {
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    
+    .panel-header {
+      flex-direction: column;
+      gap: 12px;
+      
+      .p-title {
+        font-size: 14px;
+      }
+      
+      .modern-radio {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        
+        :deep(.el-radio-button__inner) {
+          padding: 6px 10px;
+          font-size: 12px;
+        }
+      }
+    }
+    
+    .chart-wrapper {
+      .chart-container {
+        height: 220px !important;
+      }
+    }
+  }
+  
+  .stats-column {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    
+    .mini-stat-card {
+      flex: 1;
+      min-width: calc(50% - 10px);
+      padding: 14px;
+      border-radius: 12px;
+      
+      .s-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+      
+      .s-info {
+        .s-val { font-size: 18px; }
+        .s-label { font-size: 10px; }
+      }
+    }
+  }
+  
+  .data-table-panel {
+    padding: 16px;
+    border-radius: 16px;
+    margin-top: 16px;
+    
+    .panel-header {
+      flex-direction: column;
+      gap: 12px;
+      
+      .actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        
+        .el-button {
+          flex: 1;
+          padding: 8px 12px;
+          font-size: 12px;
+        }
+      }
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      
+      :deep(.el-table) {
+        min-width: 600px;
+      }
+    }
+  }
+  
+  .pagination-footer {
+    justify-content: center;
+    
+    :deep(.el-pagination) {
+      flex-wrap: wrap;
+      gap: 8px;
+      
+      .el-pagination__sizes,
+      .el-pagination__jump {
+        display: none;
+      }
+    }
+  }
+  
+  // 弹窗移动端
+  :deep(.el-dialog) {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 16px auto !important;
+    
+    .el-dialog__body {
+      padding: 16px;
+    }
+  }
+  
+  .batch-item {
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    
+    :deep(.el-col) {
+      max-width: 100%;
+      flex: 0 0 100%;
+      margin-bottom: 8px;
+    }
+  }
+}
 </style>

@@ -380,4 +380,79 @@ const removeAttachment = async (id?: number) => {
 .fw-bold { font-weight: 600; color: #303133; }
 .text-muted { color: #909399; font-style: italic; font-size: 13px; }
 .text-tip { color: #409EFF; font-weight: 500; }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .record {
+    &__card {
+      border-radius: 12px;
+      
+      :deep(.el-card__header) {
+        padding: 16px;
+      }
+      
+      :deep(.el-card__body) {
+        padding: 12px;
+      }
+    }
+    
+    &__header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+      
+      .header-title {
+        font-size: 14px;
+      }
+      
+      .header-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        
+        .quick-search {
+          width: 100%;
+        }
+        
+        .search-input {
+          width: 100%;
+        }
+        
+        .el-button {
+          width: 100%;
+          margin-left: 0 !important;
+        }
+      }
+    }
+    
+    &__pager {
+      justify-content: center;
+      
+      :deep(.el-pagination) {
+        flex-wrap: wrap;
+        gap: 8px;
+        
+        .el-pagination__sizes,
+        .el-pagination__jump {
+          display: none;
+        }
+      }
+    }
+  }
+  
+  :deep(.el-table) {
+    min-width: 600px;
+  }
+  
+  // 弹窗
+  :deep(.el-dialog) {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 16px auto !important;
+    
+    .el-dialog__body {
+      padding: 16px;
+    }
+  }
+}
 </style>

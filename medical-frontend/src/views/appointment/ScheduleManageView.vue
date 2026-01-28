@@ -537,4 +537,157 @@ onMounted(() => {
 :deep(.el-progress-bar__outer) {
   background-color: #ebeef5;
 }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .schedule-manage {
+    padding: 0 8px;
+    
+    .stat-cards {
+      margin-bottom: 16px;
+      
+      :deep(.el-row) {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      
+      :deep(.el-col) {
+        max-width: 100% !important;
+        flex: none !important;
+        padding: 0 !important;
+      }
+      
+      .stat-card {
+        border-radius: 12px;
+        
+        :deep(.el-card__body) {
+          padding: 14px 12px;
+        }
+        
+        .stat-header { font-size: 11px; }
+        .stat-value { font-size: 22px; margin-top: 4px; }
+      }
+    }
+    
+    .filter-card {
+      border-radius: 12px;
+      margin-bottom: 12px;
+      
+      :deep(.el-card__body) {
+        padding: 12px;
+      }
+      
+      :deep(.el-form) {
+        display: flex;
+        flex-direction: column;
+        
+        .el-form-item {
+          margin-bottom: 12px;
+          margin-right: 0;
+          width: 100%;
+          
+          .el-form-item__label {
+            width: 60px !important;
+            font-size: 13px;
+          }
+          
+          .el-form-item__content {
+            flex: 1;
+          }
+        }
+        
+        .el-select,
+        .el-date-editor {
+          width: 100% !important;
+        }
+        
+        // 按钮行
+        .el-form-item:last-child {
+          .el-form-item__content {
+            display: flex;
+            gap: 10px;
+            
+            .el-button {
+              flex: 1;
+              margin: 0;
+            }
+          }
+        }
+      }
+    }
+    
+    .action-bar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+      
+      .el-button {
+        font-size: 11px;
+        padding: 8px 10px;
+        margin: 0 !important;
+        
+        .el-icon {
+          margin-right: 4px;
+        }
+      }
+    }
+    
+    .custom-table {
+      border-radius: 12px;
+      overflow: hidden;
+      
+      // 包裹一层使表格可以横向滚动
+      :deep(.el-table) {
+        display: block;
+        overflow-x: auto;
+        
+        .el-table__header-wrapper,
+        .el-table__body-wrapper {
+          min-width: 650px;
+        }
+      }
+    }
+  }
+  
+  // 弹窗移动端
+  :deep(.el-dialog) {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 16px auto !important;
+    
+    .el-dialog__header {
+      padding: 16px;
+    }
+    
+    .el-dialog__body {
+      padding: 16px;
+    }
+    
+    .el-dialog__footer {
+      padding: 12px 16px;
+    }
+    
+    .el-form-item {
+      margin-bottom: 16px;
+      
+      .el-form-item__label {
+        font-size: 13px;
+      }
+    }
+    
+    .el-select,
+    .el-date-editor,
+    .el-input-number {
+      width: 100% !important;
+    }
+  }
+  
+  .batch-tips {
+    font-size: 11px;
+    padding: 10px;
+    border-radius: 8px;
+  }
+}
 </style>

@@ -110,5 +110,56 @@ search();
 
 .mr-2 { margin-right: 8px; }
 .ml-3 { margin-left: 12px; }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .patients {
+    &__card {
+      border-radius: 12px;
+      min-height: auto;
+      
+      :deep(.el-card__header) {
+        padding: 16px;
+      }
+      
+      :deep(.el-card__body) {
+        padding: 12px;
+      }
+    }
+    
+    &__header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+      
+      .header-title {
+        font-size: 14px;
+      }
+      
+      .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+        
+        .search-input {
+          flex: 1;
+          min-width: 150px;
+        }
+        
+        .el-button {
+          margin-left: 0 !important;
+        }
+      }
+    }
+  }
+  
+  :deep(.el-table) {
+    min-width: 500px;
+  }
+  
+  .empty-tip {
+    padding: 20px 0;
+  }
+}
 </style>
 

@@ -1,7 +1,10 @@
 <template>
   <el-container class="layout-wrapper">
+    <!-- 移动端遮罩层 -->
+    <div class="mobile-overlay" :class="{ 'is-visible': sidebarOpen }" @click="closeSidebar"></div>
+    
     <!-- 侧边导航栏 -->
-    <el-aside width="240px" class="side-aside">
+    <el-aside width="240px" class="side-aside" :class="{ 'mobile-open': sidebarOpen }">
       <div class="side-logo">
         <svg viewBox="0 0 100 100" class="logo-svg">
           <rect x="35" y="15" width="30" height="70" rx="4" fill="#ff4d4f" />
@@ -74,6 +77,9 @@
       <!-- 顶部导航 -->
       <el-header class="main-header">
         <div class="header-left">
+          <button class="mobile-menu-btn" @click="toggleSidebar">
+            <el-icon :size="24"><Expand /></el-icon>
+          </button>
           <el-breadcrumb separator="/" class="custom-breadcrumb">
             <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item>{{ pageTitle }}</el-breadcrumb-item>
@@ -125,18 +131,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/modules/auth';
 import { 
   Calendar, ChatDotRound, DataLine, Monitor, Document, 
-  User, CaretBottom, Bell, Setting, SwitchButton, UserFilled, Timer
+  User, CaretBottom, Bell, Setting, SwitchButton, UserFilled, Timer, Expand
 } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+
+// 移动端侧边栏状态
+const sidebarOpen = ref(false);
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value;
+};
+
+const closeSidebar = () => {
+  sidebarOpen.value = false;
+};
+
+// 路由变化时关闭侧边栏
+watch(() => route.path, () => {
+  closeSidebar();
+});
 
 const activeMenu = computed(() => {
   const path = route.path;
@@ -403,6 +425,123 @@ const handleCommand = (cmd: string) => {
   .logout-item:hover {
     background-color: #fff1f0 !important;
     color: #ff4d4f !important;
+  }
+}
+
+// 移动端菜单按钮 - 默认隐藏
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #1a1a1a;
+  border-radius: 8px;
+  transition: 0.3s;
+  
+  &:hover {
+    background: #f5f7fa;
+  }
+}
+
+// 移动端遮罩层
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  
+  &.is-visible {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// ==================== 移动端响应式 ====================
+@media screen and (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .mobile-overlay {
+    display: block;
+  }
+  
+  .side-aside {
+    position: fixed !important;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 260px !important;
+    z-index: 999;
+    transition: left 0.3s ease;
+    
+    &.mobile-open {
+      left: 0;
+    }
+  }
+  
+  .main-header {
+    padding: 0 16px;
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .custom-breadcrumb {
+      display: none;
+    }
+  }
+  
+  .header-right {
+    gap: 12px;
+    
+    .user-meta {
+      display: none !important;
+    }
+    
+    .admin-user {
+      padding: 4px 8px;
+      gap: 8px;
+    }
+    
+    .divider-v {
+      display: none;
+    }
+    
+    .notice-center {
+      display: none;
+    }
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+}
+
+// 平板适配
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .side-aside {
+    width: 200px !important;
+  }
+  
+  .main-header {
+    padding: 0 20px;
+  }
+  
+  .main-content {
+    padding: 20px;
   }
 }
 </style>

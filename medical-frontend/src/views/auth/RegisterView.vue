@@ -401,9 +401,73 @@ const goLogin = () => {
   position: absolute; bottom: 30px; width: 100%; text-align: center; font-size: 10px; color: #c7c7cc; letter-spacing: 1px; font-weight: 700;
 }
 
-@media (max-width: 480px) {
-  .card-container { padding: 40px 20px; }
-  .title { font-size: 22px; }
+@media (max-width: 768px) {
+  .register-panel {
+    max-width: 100%;
+    padding: 16px;
+  }
+  
+  .card-container {
+    padding: 36px 20px;
+    border-radius: 24px;
+  }
+  
+  .panel-header {
+    margin-bottom: 28px;
+    
+    .title {
+      font-size: 20px;
+    }
+    
+    .tagline {
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+  }
+  
+  .dna-aside {
+    display: none !important;
+  }
+  
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .el-form-item__label {
+      margin-bottom: 6px;
+      padding: 0 !important;
+    }
+    
+    .el-form-item__content {
+      width: 100%;
+    }
+  }
+  
+  .btn-submit {
+    height: 50px;
+    font-size: 15px;
+    border-radius: 14px;
+  }
+  
+  .panel-footer {
+    margin-top: 24px;
+  }
+  
+  .page-info-deco {
+    bottom: 16px;
+    font-size: 9px;
+    padding: 0 20px;
+  }
+  
+  .agreement-row {
+    font-size: 12px;
+    flex-wrap: wrap;
+    
+    .agreement-text {
+      font-size: 12px;
+    }
+  }
 }
 </style>
 

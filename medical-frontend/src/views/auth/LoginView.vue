@@ -565,9 +565,80 @@ const goRegister = () => {
   gap: 40px;
 }
 
-@media (max-width: 480px) {
-  .card-container { padding: 40px 25px; }
-  .title { font-size: 24px; }
+@media (max-width: 768px) {
+  .login-panel {
+    max-width: 100%;
+    padding: 16px;
+  }
+  
+  .card-container {
+    padding: 40px 24px;
+    border-radius: 24px;
+  }
+  
+  .panel-header {
+    margin-bottom: 36px;
+    
+    .hospital-cross {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 16px;
+    }
+    
+    .title {
+      font-size: 22px;
+    }
+    
+    .tagline {
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+  }
+  
+  .dna-aside {
+    display: none !important;
+  }
+  
+  .med-ecg-container {
+    height: 200px !important;
+  }
+  
+  .btn-submit {
+    height: 54px;
+    font-size: 15px;
+    border-radius: 14px;
+  }
+  
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .el-form-item__label {
+      margin-bottom: 8px;
+      padding: 0 !important;
+    }
+    
+    .el-form-item__content {
+      width: 100%;
+    }
+  }
+  
+  .form-actions {
+    margin: 10px 0 30px;
+  }
+  
+  .panel-footer {
+    margin-top: 28px;
+  }
+  
+  .page-info-deco {
+    bottom: 16px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 0 20px;
+    gap: 20px;
+  }
 }
 </style>
 

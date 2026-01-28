@@ -106,6 +106,49 @@ public class AIConsultationController {
         return Result.success(result);
     }
 
+    @PostMapping(value = "/chat/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "智能问诊-流式输出(SSE)")
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter chatStream(@RequestBody @Valid ChatRequest request) {
+        Long userId = com.medical.common.utils.SecurityUtils.getUserId();
+        var profile = healthProfileService.getProfile(userId);
+        String json = com.alibaba.fastjson2.JSON.toJSONString(profile);
+        
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = 
+            new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(120000L); // 2分钟超时
+        
+        String systemPrompt = "你是一位专业的医疗AI助手。以下是当前患者的健康档案（JSON格式）：" + json + 
+                "。请结合档案回答患者的问题。如果问题与档案无关，则正常回答。请注意：1. 如果患者询问用药，务必检查过敏史。2. 回答要严谨、专业，但语气要亲切。";
+        
+        com.medical.ai.model.DeepSeekRequest deepSeekRequest = deepSeekService.buildRequest(systemPrompt, request.getMessage(), null);
+        
+        deepSeekService.chatStream(deepSeekRequest, 
+            chunk -> {
+                try {
+                    // JSON encode to preserve newlines and special characters
+                    String jsonChunk = com.alibaba.fastjson2.JSON.toJSONString(chunk);
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                        .data(jsonChunk)
+                        .name("message"));
+                } catch (java.io.IOException e) {
+                    log.debug("SSE发送失败: {}", e.getMessage());
+                    emitter.completeWithError(e);
+                }
+            },
+            () -> {
+                try {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                        .data("[DONE]")
+                        .name("done"));
+                    emitter.complete();
+                } catch (java.io.IOException e) {
+                    log.debug("SSE完成失败: {}", e.getMessage());
+                }
+            }
+        );
+        
+        return emitter;
+    }
+
     @Data
     public static class ChatRequest {
         @NotBlank(message = "消息不能为空")

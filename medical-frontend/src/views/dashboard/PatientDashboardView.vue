@@ -398,4 +398,129 @@ onMounted(() => {
 @media (max-width: 1100px) {
   .service-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 0;
+  }
+  
+  .welcome-banner {
+    border-radius: 16px;
+    padding: 20px;
+    margin: 0 0 20px;
+    min-height: auto;
+    
+    .banner-content {
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .user-greeting {
+      text-align: center;
+      
+      h2 { font-size: 18px; }
+      p { font-size: 12px; }
+      
+      .greeting-tag {
+        font-size: 10px;
+        padding: 4px 10px;
+      }
+    }
+    
+    .banner-stats {
+      justify-content: center;
+      gap: 24px;
+      
+      .mini-stat {
+        text-align: center;
+        
+        .stat-value { font-size: 22px; }
+        .stat-label { font-size: 11px; }
+      }
+      
+      .divider {
+        height: 30px;
+      }
+    }
+    
+    .banner-deco {
+      display: none;
+    }
+  }
+  
+  .section-header {
+    padding: 0 16px;
+    
+    .title { font-size: 18px; }
+    .subtitle { font-size: 11px; }
+  }
+  
+  .service-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    padding: 0 16px;
+  }
+  
+  .service-card {
+    padding: 16px;
+    border-radius: 16px;
+    
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      font-size: 22px;
+    }
+    
+    .card-info {
+      h4 { font-size: 15px; }
+      p { font-size: 12px; }
+    }
+  }
+  
+  .health-panels {
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+  }
+  
+  .health-panel {
+    border-radius: 16px;
+    
+    .panel-header {
+      padding: 16px;
+      
+      h3 { font-size: 15px; }
+    }
+    
+    .panel-body {
+      padding: 16px;
+    }
+  }
+  
+  .alert-item {
+    padding: 12px;
+    border-radius: 12px;
+    gap: 12px;
+    
+    .item-label { font-size: 13px; }
+    .item-val { font-size: 12px; }
+  }
+  
+  .ai-suggestion-box {
+    padding: 16px;
+    border-radius: 16px;
+    
+    .ai-avatar {
+      top: -28px;
+      left: 16px;
+      font-size: 24px;
+    }
+    
+    .ai-chat-bubble {
+      font-size: 13px;
+    }
+  }
+}
 </style>

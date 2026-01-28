@@ -185,4 +185,77 @@ const saveProfile = () => {
 }
 
 .mt-4 { margin-top: 16px; }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .profile {
+    :deep(.el-row) {
+      flex-direction: column;
+      
+      .el-col {
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-bottom: 16px;
+      }
+    }
+    
+    .profile-card {
+      border-radius: 12px;
+      
+      .profile-header {
+        padding: 16px 0;
+        
+        .profile-avatar {
+          width: 64px !important;
+          height: 64px !important;
+        }
+        
+        .profile-name {
+          font-size: 18px;
+        }
+      }
+      
+      .profile-info {
+        padding: 16px 0 0;
+        
+        .info-item {
+          font-size: 13px;
+        }
+      }
+    }
+    
+    .edit-card {
+      border-radius: 12px;
+      
+      :deep(.el-card__body) {
+        padding: 16px;
+      }
+    }
+    
+    .profile-form {
+      :deep(.el-form-item) {
+        flex-direction: column;
+        align-items: flex-start;
+        
+        .el-form-item__label {
+          padding: 0 0 6px !important;
+        }
+        
+        .el-form-item__content {
+          width: 100%;
+        }
+      }
+    }
+    
+    .security-item {
+      flex-wrap: wrap;
+      gap: 10px;
+      
+      .security-info {
+        flex: 1;
+        min-width: 200px;
+      }
+    }
+  }
+}
 </style>

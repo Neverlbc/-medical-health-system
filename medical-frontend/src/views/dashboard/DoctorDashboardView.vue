@@ -295,4 +295,133 @@ const openDoc = (filename: string) => {
 @media (max-width: 1000px) {
   .action-grid { grid-template-columns: 1fr; }
 }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .doctor-dashboard {
+    padding: 0 12px;
+  }
+  
+  .vital-overview-header .vital-banner {
+    padding: 20px 16px;
+    border-radius: 16px;
+    margin: 0;
+  }
+  
+  .doctor-brief {
+    flex-direction: column;
+    gap: 16px;
+    
+    .brief-info {
+      flex-direction: column;
+      text-align: center;
+      gap: 12px;
+      
+      .text-group {
+        h2 { font-size: 16px; line-height: 1.4; }
+        p { font-size: 11px; }
+      }
+    }
+    
+    .doc-avatar {
+      width: 48px !important;
+      height: 48px !important;
+    }
+    
+    .live-pulse {
+      justify-content: center;
+    }
+  }
+  
+  .quick-stats-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-top: 20px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    
+    .stat-capsule {
+      padding: 12px 10px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-width: 100px;
+      flex: 1;
+      
+      .val {
+        font-size: 24px;
+        order: 1;
+        margin-bottom: 4px;
+      }
+      
+      .label {
+        margin: 0;
+        order: 2;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      
+      .trend {
+        order: 3;
+        margin-left: 0;
+        margin-top: 4px;
+        font-size: 9px;
+      }
+    }
+  }
+  
+  .workbench-section {
+    padding: 0;
+    margin-top: 20px;
+    
+    .section-title {
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 4px;
+      
+      h3 { font-size: 16px; }
+      span { font-size: 10px; }
+    }
+  }
+  
+  .action-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    padding: 0 4px;
+  }
+  
+  .action-item {
+    padding: 16px;
+    flex-direction: row;
+    gap: 14px;
+    border-radius: 14px;
+    
+    .i-circle {
+      width: 44px;
+      height: 44px;
+      font-size: 20px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    
+    .i-info {
+      text-align: left;
+      flex: 1;
+      
+      h4 { font-size: 14px; margin-bottom: 4px; }
+      p { font-size: 12px; line-height: 1.4; }
+    }
+  }
+  
+  .notice-panel,
+  .quick-nav-panel {
+    height: auto;
+    min-height: 180px;
+    margin: 12px 4px;
+    border-radius: 14px;
+    padding: 16px;
+  }
+}
 </style>

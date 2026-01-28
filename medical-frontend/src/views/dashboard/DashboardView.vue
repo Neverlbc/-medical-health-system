@@ -106,5 +106,42 @@ onMounted(() => {
     height: 320px;
   }
 }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .dashboard {
+    :deep(.el-row) {
+      display: flex;
+      flex-direction: column;
+      
+      .el-col {
+        max-width: 100%;
+        flex: 0 0 100%;
+        padding: 0 !important;
+        margin-bottom: 12px;
+      }
+    }
+    
+    &__summary {
+      border-radius: 12px;
+      
+      :deep(.el-card__body) {
+        padding: 16px;
+      }
+      
+      &-title { font-size: 12px; }
+      &-value { font-size: 24px; }
+      &-desc { font-size: 12px; }
+    }
+    
+    &__charts {
+      margin-top: 0;
+    }
+    
+    &__chart {
+      height: 250px;
+    }
+  }
+}
 </style>
 

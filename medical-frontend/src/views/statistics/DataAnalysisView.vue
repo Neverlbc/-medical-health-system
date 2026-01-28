@@ -184,4 +184,46 @@ onMounted(() => {
   
   .mb-4 { margin-bottom: 20px; }
 }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .data-analysis {
+    :deep(.el-row) {
+      flex-direction: column;
+      
+      .el-col {
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-bottom: 12px;
+      }
+    }
+    
+    .stat-card {
+      padding: 16px;
+      border-radius: 12px;
+      
+      .stat-value {
+        font-size: 26px;
+      }
+      
+      .stat-label {
+        font-size: 12px;
+      }
+    }
+    
+    .chart-card {
+      height: auto;
+      min-height: 300px;
+      border-radius: 12px;
+      
+      :deep(.el-card__body) {
+        padding: 12px;
+      }
+      
+      .chart-container {
+        height: 250px;
+      }
+    }
+  }
+}
 </style>

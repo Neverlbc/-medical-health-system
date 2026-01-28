@@ -51,11 +51,14 @@
               </svg>
             </div>
           </div>
-          <div class="msg-bubble">
-            <div class="bubble-content" v-html="formatContent(item.content)"></div>
+          <div class="msg-bubble" :class="{ 'is-streaming': item.isStreaming }">
+            <div class="bubble-content">
+              <span v-html="formatContent(item.content)"></span>
+              <span v-if="item.isStreaming" class="typing-cursor">|</span>
+            </div>
             <div class="bubble-footer">
               <span class="msg-time">{{ formatTime(item.id) }}</span>
-              <span v-if="item.role === 'assistant'" class="verified-tag">已通过医学验证</span>
+              <span v-if="item.isStreaming" class="streaming-tag">AI 正在输入...</span>
             </div>
           </div>
         </div>
@@ -112,17 +115,20 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import { aiApi } from '@/api/modules/ai';
 import { useAuthStore } from '@/store/modules/auth';
 import { Delete, Position, Loading, Warning } from '@element-plus/icons-vue';
 
 // AI 回复免责尾注
 const AI_DISCLAIMER = '\n\n---\n*⚠️ 以上内容由 AI 自动生成，仅供健康参考，不构成医疗诊断。如有疑问请咨询专业医生。*';
 
+// API 基础路径
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
 interface MessageItem {
   id: number;
   role: 'user' | 'assistant';
   content: string;
+  isStreaming?: boolean;
 }
 
 const loading = ref(false);
@@ -134,7 +140,21 @@ const storageKey = ref<string>('ai-history-' + (authStore.userInfo?.username || 
 
 const appendMessage = (message: MessageItem) => {
   messages.value.push(message);
-  saveHistory();
+  if (!message.isStreaming) {
+    saveHistory();
+  }
+  scrollToBottom();
+};
+
+const updateLastMessage = (content: string, isStreaming: boolean = true) => {
+  const lastMsg = messages.value[messages.value.length - 1];
+  if (lastMsg && lastMsg.role === 'assistant') {
+    lastMsg.content = content;
+    lastMsg.isStreaming = isStreaming;
+    if (!isStreaming) {
+      saveHistory();
+    }
+  }
   scrollToBottom();
 };
 
@@ -147,7 +167,9 @@ const scrollToBottom = () => {
 
 const saveHistory = () => {
   try {
-    localStorage.setItem(storageKey.value, JSON.stringify(messages.value.slice(-100)));
+    // Don't save streaming messages
+    const historyToSave = messages.value.filter(m => !m.isStreaming).slice(-100);
+    localStorage.setItem(storageKey.value, JSON.stringify(historyToSave));
   } catch {}
 };
 
@@ -173,16 +195,83 @@ const handleAsk = async () => {
   question.value = '';
   loading.value = true;
   
+  // Add placeholder for streaming response
+  const streamMsgId = Date.now() + 1;
+  appendMessage({ id: streamMsgId, role: 'assistant', content: '', isStreaming: true });
+  
+  let fullContent = '';
+  
   try {
-    const reply = await aiApi.chat({ message: content });
-    const replyContent = reply ? String(reply).trim() + AI_DISCLAIMER : '目前无法获取 AI 回复，请稍后再次尝试。';
-    appendMessage({
-      id: Date.now() + 1,
-      role: 'assistant',
-      content: replyContent
+    const token = authStore.token;
+    const response = await fetch(`${API_BASE}/ai/chat/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ message: content })
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        // Keep the last incomplete line in buffer
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            const rawData = line.substring(5);
+            // Don't trim - preserve spaces, but check for [DONE] after trimming for comparison
+            if (rawData.trim() === '[DONE]') {
+              // Stream complete, add disclaimer
+              fullContent += AI_DISCLAIMER;
+              updateLastMessage(fullContent, false);
+            } else if (rawData.trim()) {
+              try {
+                // Parse JSON to restore newlines and special characters
+                const chunk = JSON.parse(rawData.trim());
+                fullContent += chunk;
+              } catch {
+                // Fallback: use raw data if not valid JSON
+                fullContent += rawData;
+              }
+              updateLastMessage(fullContent, true);
+            }
+          }
+        }
+      }
+    }
+    
+    // Ensure final update if stream ended without [DONE]
+    if (fullContent && messages.value[messages.value.length - 1]?.isStreaming) {
+      fullContent += AI_DISCLAIMER;
+      updateLastMessage(fullContent, false);
+    }
+    
   } catch (error) {
-    ElMessage.error('网络通讯异常，请检查接口服务');
+    console.error('SSE Error:', error);
+    // Fallback to non-streaming API
+    try {
+      const { aiApi } = await import('@/api/modules/ai');
+      const reply = await aiApi.chat({ message: content });
+      const replyContent = reply ? String(reply).trim() + AI_DISCLAIMER : '目前无法获取 AI 回复，请稍后再次尝试。';
+      updateLastMessage(replyContent, false);
+    } catch (fallbackError) {
+      updateLastMessage('网络通讯异常，请检查接口服务。', false);
+      ElMessage.error('AI 服务暂时不可用');
+    }
   } finally {
     loading.value = false;
   }
@@ -315,7 +404,6 @@ onMounted(loadHistory);
   }
   .bubble-footer { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
   .msg-time { font-size: 11px; font-weight: 600; opacity: 0.7; }
-  .verified-tag { font-size: 10px; color: #52c41a; background: #f6ffed; padding: 1px 6px; border-radius: 4px; font-weight: 700; }
 }
 
 // 正在输入
@@ -347,6 +435,136 @@ onMounted(loadHistory);
       font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s;
       &:hover:not(:disabled) { background: #1e50e6; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(42,100,255,0.25); }
       &:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+    }
+  }
+}
+
+// 打字机效果 - 闪烁光标
+.typing-cursor {
+  display: inline-block;
+  color: #2a64ff;
+  font-weight: 700;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+// 流式消息样式
+.msg-bubble.is-streaming {
+  border: 1px solid #2a64ff !important;
+  box-shadow: 0 0 0 3px rgba(42, 100, 255, 0.1) !important;
+}
+
+.streaming-tag {
+  font-size: 10px;
+  color: #2a64ff;
+  background: #e8f4ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .ai-consultation-container {
+    padding: 0;
+  }
+  
+  .ai-chat-card {
+    border-radius: 0;
+    height: 100vh;
+    max-width: 100%;
+  }
+  
+  .chat-header {
+    padding: 12px 16px;
+    
+    .bot-info {
+      gap: 10px;
+      
+      .bot-meta {
+        h3 { font-size: 14px; }
+        p { font-size: 10px; }
+      }
+    }
+  }
+  
+  .ai-disclaimer-banner {
+    margin: 0 12px 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    
+    .el-icon {
+      font-size: 20px;
+    }
+  }
+  
+  .chat-main {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .msg-row {
+    max-width: 95%;
+    gap: 10px;
+  }
+  
+  .msg-avatar {
+    .u-avatar, .a-avatar {
+      width: 32px !important;
+      height: 32px !important;
+    }
+  }
+  
+  .msg-bubble {
+    padding: 12px 14px;
+    border-radius: 16px 16px 16px 4px;
+    
+    .bubble-content {
+      font-size: 14px;
+    }
+    
+    .bubble-footer {
+      margin-top: 6px;
+      gap: 6px;
+    }
+  }
+  
+  .msg-row.user .msg-bubble {
+    border-radius: 16px 16px 4px 16px;
+  }
+  
+  .chat-footer {
+    padding: 12px 16px;
+    
+    .chat-input :deep(.el-textarea__inner) {
+      padding: 12px 14px;
+      font-size: 14px;
+      border-radius: 12px;
+    }
+    
+    .footer-bottom {
+      margin-top: 10px;
+      
+      .safety-tip {
+        display: none;
+      }
+      
+      .send-btn {
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 13px;
+      }
     }
   }
 }

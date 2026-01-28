@@ -72,6 +72,74 @@ public class DeepSeekService {
     }
 
     /**
+     * 流式聊天请求 (SSE)
+     */
+    public void chatStream(DeepSeekRequest request, java.util.function.Consumer<String> onChunk, Runnable onComplete) {
+        request.setStream(true);
+        try {
+            String requestBody = JSON.toJSONString(request);
+            log.debug("DeepSeek流式请求: {}", requestBody);
+
+            Request httpRequest = new Request.Builder()
+                    .url(config.getApiUrl())
+                    .addHeader("Authorization", "Bearer " + config.getApiKey())
+                    .addHeader("Content-Type", "application/json")
+                    .post(RequestBody.create(requestBody, MediaType.get("application/json")))
+                    .build();
+
+            client.newCall(httpRequest).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, java.io.IOException e) {
+                    log.error("DeepSeek流式请求失败", e);
+                    onComplete.run();
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, Response response) throws java.io.IOException {
+                    if (!response.isSuccessful()) {
+                        log.error("DeepSeek流式API调用失败: {}", response.code());
+                        onComplete.run();
+                        return;
+                    }
+
+                    try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                            new java.io.InputStreamReader(response.body().byteStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (line.startsWith("data: ")) {
+                                String data = line.substring(6).trim();
+                                if ("[DONE]".equals(data)) {
+                                    break;
+                                }
+                                try {
+                                    com.alibaba.fastjson2.JSONObject json = com.alibaba.fastjson2.JSON.parseObject(data);
+                                    com.alibaba.fastjson2.JSONArray choices = json.getJSONArray("choices");
+                                    if (choices != null && !choices.isEmpty()) {
+                                        com.alibaba.fastjson2.JSONObject delta = choices.getJSONObject(0).getJSONObject("delta");
+                                        if (delta != null && delta.containsKey("content")) {
+                                            String content = delta.getString("content");
+                                            if (content != null) {
+                                                onChunk.accept(content);
+                                            }
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    log.debug("解析流式数据块异常: {}", data);
+                                }
+                            }
+                        }
+                    } finally {
+                        onComplete.run();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            log.error("DeepSeek流式API调用异常", e);
+            onComplete.run();
+        }
+    }
+
+    /**
      * 构建请求对象
      */
     public DeepSeekRequest buildRequest(String systemPrompt, String userMessage, List<DeepSeekRequest.Message> history) {

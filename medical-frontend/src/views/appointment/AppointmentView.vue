@@ -823,4 +823,162 @@ const getStatusText = (status: number) => {
 }
 
 .full-width { width: 100%; }
+
+// 移动端适配
+@media (max-width: 768px) {
+  .appointment-container {
+    padding: 16px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    
+    .header-content {
+      .header-icon {
+        font-size: 24px;
+        padding: 10px;
+      }
+      
+      .title-group {
+        h1 { font-size: 18px; }
+        p { font-size: 12px; }
+      }
+    }
+    
+    .create-btn {
+      width: 100%;
+      height: 42px;
+    }
+  }
+  
+  .stat-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    
+    .stat-card {
+      padding: 16px;
+      
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+      }
+      
+      .stat-info {
+        .stat-value { font-size: 18px; }
+        .stat-label { font-size: 11px; }
+      }
+    }
+  }
+  
+  .main-content {
+    padding: 16px;
+    border-radius: 12px;
+    
+    // 隐藏表格，使用移动端卡片布局
+    .table-container {
+      overflow-x: auto;
+      
+      :deep(.el-table) {
+        min-width: 600px;
+      }
+    }
+  }
+  
+  .schedule-view {
+    .filter-bar {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 12px;
+      
+      :deep(.el-radio-button__inner) {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+    }
+  }
+  
+  .doctor-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    
+    .doctor-card {
+      padding: 16px;
+      
+      .doc-card-header {
+        gap: 12px;
+        
+        .doc-main-avatar {
+          width: 40px !important;
+          height: 40px !important;
+        }
+        
+        .doc-title-info {
+          h3 { font-size: 16px; }
+          span { font-size: 12px; }
+        }
+      }
+      
+      .doc-specialty {
+        font-size: 12px;
+        height: 36px;
+      }
+      
+      .doc-footer {
+        .fee { font-size: 16px; }
+      }
+    }
+  }
+  
+  // 弹窗移动端适配
+  :deep(.premium-dialog) {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 0 auto;
+    
+    .el-dialog__body {
+      padding: 16px;
+    }
+  }
+  
+  .booking-dialog-content {
+    .form-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+  
+  .date-strip {
+    gap: 8px;
+    
+    .date-item {
+      flex: 0 0 50px;
+      height: 68px;
+      border-radius: 10px;
+      
+      .day-name { font-size: 10px; }
+      .day-num { font-size: 16px; }
+    }
+  }
+  
+  .period-selector {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    
+    .period-item {
+      padding: 14px;
+    }
+  }
+  
+  .dialog-footer {
+    flex-direction: column;
+    gap: 12px;
+    
+    .fee-preview {
+      text-align: center;
+    }
+  }
+}
 </style>
