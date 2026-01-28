@@ -50,6 +50,40 @@
         <el-tab-pane label="随访记录" name="followup">
           <FollowUpTab :patient-id="realPatientId" v-if="activeTab === 'followup' && realPatientId" />
         </el-tab-pane>
+        <el-tab-pane label="🤖 AI 辅助诊断" name="ai-diagnosis">
+          <div class="ai-diagnosis-tab" v-if="activeTab === 'ai-diagnosis' && routeUserId">
+            <!-- 免责声明 -->
+            <div class="ai-disclaimer-box">
+              <el-icon><Warning /></el-icon>
+              <div class="disclaimer-content">
+                <strong>⚠️ 重要提示</strong>
+                <p>以下内容由 AI 基于患者健康档案自动生成，<strong>仅供诊疗参考</strong>，不能替代医生的专业判断。最终诊断请以临床检查和专业医师意见为准。</p>
+              </div>
+            </div>
+            
+            <!-- 生成按钮 -->
+            <div class="ai-action-area" v-if="!aiAnalysisResult">
+              <el-button type="primary" size="large" :loading="aiLoading" @click="generateAIDiagnosis">
+                <el-icon v-if="!aiLoading"><MagicStick /></el-icon>
+                {{ aiLoading ? 'AI 分析中，请稍候...' : '生成 AI 辅助诊断建议' }}
+              </el-button>
+              <p class="action-hint">点击按钮，AI 将综合分析患者的病史、检验结果和生命体征</p>
+            </div>
+            
+            <!-- AI 分析结果 -->
+            <div class="ai-result-area" v-if="aiAnalysisResult">
+              <div class="result-header">
+                <h3><el-icon><MagicStick /></el-icon> AI 辅助诊断建议</h3>
+                <el-button link @click="aiAnalysisResult = ''">重新生成</el-button>
+              </div>
+              <div class="result-content" v-html="formatAIContent(aiAnalysisResult)"></div>
+              <div class="result-footer">
+                <el-tag type="warning" size="small">AI 生成内容 · 仅供参考</el-tag>
+                <span class="generate-time">生成时间：{{ new Date().toLocaleString() }}</span>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
   </div>
@@ -59,6 +93,9 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getPatientInfoByUserId, type PatientInfo } from '@/api/modules/user';
+import { aiApi } from '@/api/modules/ai';
+import { ElMessage } from 'element-plus';
+import { Warning, MagicStick } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import HistoryTab from './components/HistoryTab.vue';
 import VitalSignsTab from './components/VitalSignsTab.vue';
@@ -69,10 +106,14 @@ import TreatmentTab from './components/TreatmentTab.vue';
 import FollowUpTab from './components/FollowUpTab.vue';
 
 const route = useRoute();
-const routeUserId = ref(Number(route.params.patientId) || 0); // This is actually userId passed from list
-const realPatientId = ref(0); // This is the ID from patient_info table
+const routeUserId = ref(Number(route.params.patientId) || 0);
+const realPatientId = ref(0);
 const activeTab = ref('history');
 const patientInfo = ref<PatientInfo>({} as PatientInfo);
+
+// AI 辅助诊断
+const aiLoading = ref(false);
+const aiAnalysisResult = ref('');
 
 const loadPatientInfo = async () => {
   if (routeUserId.value) {
@@ -88,6 +129,30 @@ const loadPatientInfo = async () => {
       console.error(e);
     }
   }
+};
+
+const generateAIDiagnosis = async () => {
+  if (!routeUserId.value) return;
+  aiLoading.value = true;
+  try {
+    const result = await aiApi.analyzeHealth({
+      patientId: routeUserId.value,
+      question: '请综合分析该患者的健康档案，给出可能的诊断方向、需要关注的风险因素，以及进一步检查建议。'
+    });
+    aiAnalysisResult.value = result || '暂无分析结果';
+  } catch (error) {
+    ElMessage.error('AI 分析失败，请稍后重试');
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
+const formatAIContent = (content: string) => {
+  return content
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
 };
 
 const calculateAge = (birthday?: string) => {
@@ -161,4 +226,124 @@ onMounted(() => {
 .mt-2 { margin-top: 8px; }
 .mr-4 { margin-right: 16px; }
 .mb-4 { margin-bottom: 16px; }
+
+// AI 辅助诊断 Tab 样式
+.ai-diagnosis-tab {
+  padding: 20px;
+}
+
+.ai-disclaimer-box {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  .el-icon {
+    font-size: 28px;
+    color: #b45309;
+    flex-shrink: 0;
+  }
+  
+  .disclaimer-content {
+    strong {
+      color: #b45309;
+      font-size: 15px;
+    }
+    
+    p {
+      margin: 8px 0 0;
+      color: #78350f;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  }
+}
+
+.ai-action-area {
+  text-align: center;
+  padding: 60px 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+  
+  .action-hint {
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 13px;
+  }
+}
+
+.ai-result-area {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  
+  .result-header {
+    background: linear-gradient(135deg, #2a64ff 0%, #64dcff 100%);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    h3 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+    
+    .el-button {
+      color: rgba(255,255,255,0.8);
+      
+      &:hover {
+        color: #fff;
+      }
+    }
+  }
+  
+  .result-content {
+    padding: 24px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #334155;
+    
+    :deep(h2) {
+      font-size: 18px;
+      color: #1e40af;
+      margin: 20px 0 12px;
+      padding-left: 10px;
+      border-left: 4px solid #2a64ff;
+    }
+    
+    :deep(h3) {
+      font-size: 15px;
+      color: #1e293b;
+      margin: 16px 0 8px;
+    }
+    
+    :deep(strong) {
+      color: #2a64ff;
+    }
+  }
+  
+  .result-footer {
+    padding: 12px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .generate-time {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  }
+}
 </style>

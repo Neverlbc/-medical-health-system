@@ -16,6 +16,12 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true }
   },
   {
+    path: '/policy',
+    name: 'Policy',
+    component: () => import('@/views/policy/PolicyView.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/',
     component: () => import('@/layouts/DefaultLayout.vue'),
     children: [

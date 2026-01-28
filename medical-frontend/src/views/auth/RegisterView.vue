@@ -83,7 +83,16 @@
             </el-radio-group>
           </el-form-item>
 
-          <button type="button" class="btn-submit" :disabled="loading" @click="handleRegister">
+          <el-form-item prop="agreement" class="agreement-item">
+            <el-checkbox v-model="form.agreement" class="agreement-checkbox">
+              我已阅读并同意
+              <a href="/policy?type=terms" target="_blank" class="policy-link">《用户服务协议》</a>
+              和
+              <a href="/policy?type=privacy" target="_blank" class="policy-link">《隐私政策》</a>
+            </el-checkbox>
+          </el-form-item>
+
+          <button type="button" class="btn-submit" :disabled="loading || !form.agreement" @click="handleRegister">
             <span v-if="!loading">立 即 申 请 注 册</span>
             <span v-else><el-icon class="is-loading"><Loading /></el-icon> 账户创建中...</span>
           </button>
@@ -125,7 +134,8 @@ const form = reactive({
   confirmPassword: '',
   phone: '',
   email: '',
-  role: 'PATIENT' as 'PATIENT' | 'DOCTOR'
+  role: 'PATIENT' as 'PATIENT' | 'DOCTOR',
+  agreement: false
 });
 
 const rules: FormRules<typeof form> = {
@@ -354,6 +364,32 @@ const goLogin = () => {
   box-shadow: 0 12px 28px -10px rgba(42, 100, 255, 0.5); transition: 0.4s;
   display: flex; align-items: center; justify-content: center; gap: 10px;
   &:hover { transform: translateY(-2px); box-shadow: 0 20px 35px -10px rgba(42, 100, 255, 0.4); filter: brightness(1.05); }
+}
+
+.agreement-item {
+  margin-bottom: 15px;
+  
+  :deep(.el-form-item__content) {
+    justify-content: center;
+  }
+}
+
+.agreement-checkbox {
+  :deep(.el-checkbox__label) {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+  }
+}
+
+.policy-link {
+  color: #2a64ff;
+  text-decoration: none;
+  font-weight: 600;
+  
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .panel-footer {

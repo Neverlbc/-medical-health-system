@@ -27,6 +27,14 @@
         </div>
       </header>
       
+      <!-- AI 免责声明横幅 -->
+      <div class="ai-disclaimer-banner">
+        <el-icon><Warning /></el-icon>
+        <div class="disclaimer-text">
+          <strong>重要声明：</strong>AI 建议仅供健康参考，不能替代专业医生的诊断和治疗。如有紧急症状，请立即拨打 <strong>120</strong> 或前往医院就诊。
+        </div>
+      </div>
+      
       <!-- 聊天主体 -->
       <div class="chat-main" ref="scrollContainer">
         <div v-for="item in messages" :key="item.id" :class="['msg-row', item.role]">
@@ -106,7 +114,10 @@ import { ref, nextTick, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { aiApi } from '@/api/modules/ai';
 import { useAuthStore } from '@/store/modules/auth';
-import { Delete, Position, Loading } from '@element-plus/icons-vue';
+import { Delete, Position, Loading, Warning } from '@element-plus/icons-vue';
+
+// AI 回复免责尾注
+const AI_DISCLAIMER = '\n\n---\n*⚠️ 以上内容由 AI 自动生成，仅供健康参考，不构成医疗诊断。如有疑问请咨询专业医生。*';
 
 interface MessageItem {
   id: number;
@@ -164,10 +175,11 @@ const handleAsk = async () => {
   
   try {
     const reply = await aiApi.chat({ message: content });
+    const replyContent = reply ? String(reply).trim() + AI_DISCLAIMER : '目前无法获取 AI 回复，请稍后再次尝试。';
     appendMessage({
       id: Date.now() + 1,
       role: 'assistant',
-      content: reply ? String(reply).trim() : '目前无法获取 AI 回复，请稍后再次尝试。'
+      content: replyContent
     });
   } catch (error) {
     ElMessage.error('网络通讯异常，请检查接口服务');
@@ -243,6 +255,31 @@ onMounted(loadHistory);
   }
 
   .action-btn { color: #94a3b8; font-weight: 600; font-size: 13px; &:hover { color: #ff4d4f; } }
+}
+
+// 免责声明横幅
+.ai-disclaimer-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom: 1px solid #f59e0b;
+  padding: 12px 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .el-icon {
+    font-size: 20px;
+    color: #b45309;
+    flex-shrink: 0;
+  }
+  
+  .disclaimer-text {
+    font-size: 13px;
+    color: #78350f;
+    
+    strong {
+      color: #b45309;
+    }
+  }
 }
 
 // 对话区
