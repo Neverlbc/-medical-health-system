@@ -2,7 +2,7 @@
 
 本文件描述后端 HTTP 与 WebSocket 接口的使用方式与统一规范。文档随版本演进更新，未上线的接口会标注“计划中”或“暂未实现”。
 
-最后更新时间：2025-11-14
+最后更新时间：2026-01-28
 
 ## 基础信息
 - 基础路径：`http://localhost:8080/api/v1`
@@ -113,10 +113,6 @@ Authorization: Bearer <token>
 { "code": 200, "message": "logout ok", "data": null, "timestamp": 1699276800000 }
 ```
 
-### 1.4 刷新 Token（预留，暂未实现）
-- URL：`POST /auth/refresh`
-- 是否需要认证：是
-- 说明：后续可按需要提供滑动续期能力。
 
 ---
 
@@ -585,21 +581,7 @@ GET /api/v1/record/list?pageNum=1&pageSize=10&keyword=高血压&userId=1001
 ---
 
 
-## 6. 通知（Notification）【计划中】
-- `GET /notification/list?type=&isRead=&pageNum=&pageSize=`
-- `POST /notification/{id}/read`
-- `POST /notification/read-all`
-- `GET /notification/unread-count`
-
----
-
-## 7. 健康知识库（Knowledge）【计划中】
-- `GET /knowledge/list?category=&keyword=&pageNum=&pageSize=`
-- `GET /knowledge/{id}`
-
----
-
-## 8. 文件上传（File）【基础已存在，按需扩展】
+## 6. 文件上传（File）【已实现】
 - URL：`POST /file/upload`
 - Content-Type：`multipart/form-data`
 - 参数
@@ -621,23 +603,3 @@ GET /api/v1/record/list?pageNum=1&pageSize=10&keyword=高血压&userId=1001
   "timestamp": 1699276800000
 }
 ```
-
----
-
-## WebSocket 接口
-
-连接地址
-```
-ws://localhost:8080/ws/{userId}
-```
-
-消息格式（示例）
-```json
-{
-  "type": "SYSTEM",
-  "title": "系统维护",
-  "content": "系统将于今晚22:00进行维护",
-  "timestamp": 1699276800000
-}
-```
-
