@@ -67,7 +67,63 @@ jobs:
           path: medical-frontend/dist
           retention-days: 7
 
-      # ---- 7. 部署到服务器 ----
+      # ---- 7. 初始化服务器环境（首次部署自动创建） ----
+      - name: 🔧 Initialize server environment
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            # 创建前端部署目录
+            mkdir -p /www/wwwroot/medical-frontend/dist
+
+            # 确保 Nginx 已安装
+            if ! command -v nginx &> /dev/null; then
+              echo "📦 Installing Nginx..."
+              apt update && apt install -y nginx
+              systemctl enable nginx
+            fi
+
+            # 确保 rsync 已安装
+            if ! command -v rsync &> /dev/null; then
+              echo "📦 Installing rsync..."
+              apt install -y rsync
+            fi
+
+            # 创建 Nginx 站点配置（如果不存在）
+            if [ ! -f /etc/nginx/sites-available/medical ]; then
+              echo "🌐 Creating Nginx config..."
+              cat > /etc/nginx/sites-available/medical << 'NGEOF'
+            server {
+                listen 80;
+                server_name _;
+                root /www/wwwroot/medical-frontend/dist;
+                index index.html;
+
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+
+                location /api/ {
+                    proxy_pass http://127.0.0.1:8080/api/;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+
+                gzip on;
+                gzip_types text/plain text/css application/json application/javascript text/xml;
+            }
+            NGEOF
+              ln -sf /etc/nginx/sites-available/medical /etc/nginx/sites-enabled/medical
+              rm -f /etc/nginx/sites-enabled/default
+            fi
+            echo "✅ Server environment ready"
+
+      # ---- 8. 部署到服务器 ----
       - name: 🚀 Deploy to server via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
@@ -79,7 +135,7 @@ jobs:
           remote_key: ${{ secrets.SERVER_SSH_KEY }}
           remote_port: ${{ secrets.SERVER_PORT || 22 }}
 
-      # ---- 8. 重载 Nginx ----
+      # ---- 9. 重载 Nginx ----
       - name: 🔄 Reload Nginx
         uses: appleboy/ssh-action@v1
         with:
@@ -89,5 +145,5 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             echo "🔄 Reloading Nginx..."
-            sudo nginx -t && sudo systemctl reload nginx
+            nginx -t && systemctl reload nginx
             echo "✅ Frontend deployed successfully!"

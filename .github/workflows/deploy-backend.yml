@@ -69,7 +69,50 @@ jobs:
           path: medical-backend/medical-admin/target/medical-admin.jar
           retention-days: 7
 
-      # ---- 6. 部署 JAR 到服务器 ----
+      # ---- 6. 初始化服务器环境（首次部署自动创建） ----
+      - name: 🔧 Initialize server environment
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            # 创建部署目录
+            mkdir -p /www/wwwroot/medical-backend/backup
+
+            # 确保 JDK 17 已安装
+            if ! java -version 2>&1 | grep -q "17"; then
+              echo "📦 Installing JDK 17..."
+              apt update && apt install -y openjdk-17-jdk
+            fi
+            echo "☕ Java: $(java -version 2>&1 | head -1)"
+
+            # 确保 Systemd 服务存在
+            if [ ! -f /etc/systemd/system/medical.service ]; then
+              echo "⚙️ Creating medical.service..."
+              cat > /etc/systemd/system/medical.service << 'SVCEOF'
+            [Unit]
+            Description=Medical Health System Backend
+            After=network.target
+
+            [Service]
+            User=root
+            WorkingDirectory=/www/wwwroot/medical-backend
+            ExecStart=/usr/bin/java -Xms512m -Xmx1024m -XX:+UseG1GC -jar medical-admin.jar
+            SuccessExitStatus=143
+            Restart=always
+            RestartSec=10
+
+            [Install]
+            WantedBy=multi-user.target
+            SVCEOF
+              systemctl daemon-reload
+              systemctl enable medical
+            fi
+            echo "✅ Server environment ready"
+
+      # ---- 7. 部署 JAR 到服务器 ----
       - name: 📦 Upload JAR to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -79,9 +122,9 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           source: medical-backend/medical-admin/target/medical-admin.jar
           target: /www/wwwroot/medical-backend/
-          strip_components: 4  # 去掉 medical-backend/medical-admin/target/ 前缀
+          strip_components: 4
 
-      # ---- 7. 重启后端服务 ----
+      # ---- 8. 重启后端服务 ----
       - name: 🔄 Restart backend service
         uses: appleboy/ssh-action@v1
         with:
@@ -92,30 +135,30 @@ jobs:
           script: |
             echo "🔄 Restarting medical backend service..."
 
-            # 备份旧 JAR（保留最近 3 个版本）
             DEPLOY_DIR="/www/wwwroot/medical-backend"
             BACKUP_DIR="$DEPLOY_DIR/backup"
-            mkdir -p "$BACKUP_DIR"
 
-            if [ -f "$DEPLOY_DIR/medical-admin.jar.running" ]; then
+            # 备份旧 JAR（如果存在）
+            if [ -f "$DEPLOY_DIR/medical-admin.jar.bak" ]; then
               TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-              cp "$DEPLOY_DIR/medical-admin.jar.running" "$BACKUP_DIR/medical-admin_${TIMESTAMP}.jar"
-              # 只保留最近 3 个备份
+              mv "$DEPLOY_DIR/medical-admin.jar.bak" "$BACKUP_DIR/medical-admin_${TIMESTAMP}.jar"
               ls -t "$BACKUP_DIR"/medical-admin_*.jar 2>/dev/null | tail -n +4 | xargs -r rm
             fi
 
-            # 替换运行中的 JAR
-            cp "$DEPLOY_DIR/medical-admin.jar" "$DEPLOY_DIR/medical-admin.jar.running" 2>/dev/null || \
-            mv "$DEPLOY_DIR/medical-admin.jar" "$DEPLOY_DIR/medical-admin.jar.running"
+            # 当前 JAR 变为备份
+            if [ -f "$DEPLOY_DIR/medical-admin.jar" ] && [ -s "$DEPLOY_DIR/medical-admin.jar" ]; then
+              cp "$DEPLOY_DIR/medical-admin.jar" "$DEPLOY_DIR/medical-admin.jar.bak"
+            fi
 
-            # 重启 Systemd 服务
-            sudo systemctl restart medical
-            sleep 5
+            # 重启服务
+            systemctl daemon-reload
+            systemctl restart medical
+            sleep 8
 
             # 健康检查
-            if sudo systemctl is-active --quiet medical; then
+            if systemctl is-active --quiet medical; then
               echo "✅ Backend service is running!"
-              sudo systemctl status medical --no-pager -l | head -20
+              systemctl status medical --no-pager -l | head -20
             else
               echo "❌ Backend service failed to start!"
               sudo journalctl -u medical.service --no-pager -n 30
