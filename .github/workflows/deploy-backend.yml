@@ -121,11 +121,11 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           source: medical-backend/medical-admin/target/medical-admin.jar
-          target: /www/wwwroot/medical-backend/
-          strip_components: 4
+          target: /tmp/medical-deploy/
+          strip_components: 3
 
-      # ---- 8. 重启后端服务 ----
-      - name: 🔄 Restart backend service
+      # ---- 8. 部署并重启后端服务 ----
+      - name: 🔄 Deploy and restart backend service
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -133,27 +133,38 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            echo "🔄 Restarting medical backend service..."
-
+            set -e
             DEPLOY_DIR="/www/wwwroot/medical-backend"
             BACKUP_DIR="$DEPLOY_DIR/backup"
+            SRC="/tmp/medical-deploy/medical-admin.jar"
 
-            # 备份旧 JAR（如果存在）
-            if [ -f "$DEPLOY_DIR/medical-admin.jar.bak" ]; then
+            echo "📋 Checking uploaded JAR..."
+            if [ ! -f "$SRC" ]; then
+              echo "❌ JAR not found at $SRC"
+              echo "📂 Contents of /tmp/medical-deploy/:"
+              find /tmp/medical-deploy/ -type f 2>/dev/null || echo "  (empty)"
+              exit 1
+            fi
+            echo "✅ JAR found: $(du -h $SRC | cut -f1)"
+
+            # 停止当前服务
+            systemctl stop medical 2>/dev/null || true
+
+            # 备份旧 JAR
+            if [ -f "$DEPLOY_DIR/medical-admin.jar" ] && [ -s "$DEPLOY_DIR/medical-admin.jar" ]; then
               TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-              mv "$DEPLOY_DIR/medical-admin.jar.bak" "$BACKUP_DIR/medical-admin_${TIMESTAMP}.jar"
+              cp "$DEPLOY_DIR/medical-admin.jar" "$BACKUP_DIR/medical-admin_${TIMESTAMP}.jar"
               ls -t "$BACKUP_DIR"/medical-admin_*.jar 2>/dev/null | tail -n +4 | xargs -r rm
             fi
 
-            # 当前 JAR 变为备份
-            if [ -f "$DEPLOY_DIR/medical-admin.jar" ] && [ -s "$DEPLOY_DIR/medical-admin.jar" ]; then
-              cp "$DEPLOY_DIR/medical-admin.jar" "$DEPLOY_DIR/medical-admin.jar.bak"
-            fi
+            # 移动新 JAR 到部署目录
+            mv "$SRC" "$DEPLOY_DIR/medical-admin.jar"
+            echo "✅ JAR deployed to $DEPLOY_DIR/medical-admin.jar"
 
             # 重启服务
             systemctl daemon-reload
             systemctl restart medical
-            sleep 8
+            sleep 10
 
             # 健康检查
             if systemctl is-active --quiet medical; then
@@ -161,6 +172,6 @@ jobs:
               systemctl status medical --no-pager -l | head -20
             else
               echo "❌ Backend service failed to start!"
-              sudo journalctl -u medical.service --no-pager -n 30
+              journalctl -u medical.service --no-pager -n 30
               exit 1
             fi
