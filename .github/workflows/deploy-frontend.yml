@@ -98,7 +98,7 @@ jobs:
               cat > /etc/nginx/sites-available/medical << 'NGEOF'
             server {
                 listen 80;
-                server_name _;
+                server_name medical.lbc-ai.top;
                 root /www/wwwroot/medical-frontend/dist;
                 index index.html;
 
