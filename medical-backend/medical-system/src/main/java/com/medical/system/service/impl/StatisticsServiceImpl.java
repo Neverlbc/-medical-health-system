@@ -32,10 +32,11 @@ public class StatisticsServiceImpl implements StatisticsService {
         // 1. 总患者数
         vo.setTotalPatients(patientInfoMapper.selectCount(null));
         
-        // 2. 今日预约数
+        // 2. 今日待诊预约数（status=0 表示待就诊）
         vo.setTodayAppointments(appointmentMapper.selectCount(
                 new LambdaQueryWrapper<Appointment>()
                         .eq(Appointment::getAppointmentDate, LocalDate.now())
+                        .eq(Appointment::getStatus, 0)
         ));
         
         // 3. 总诊断记录数
