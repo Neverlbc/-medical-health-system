@@ -1,0 +1,67 @@
+# ============================================================
+# CI 检查 — Pull Request 代码质量门禁
+# ============================================================
+# 触发条件：向 main 分支发起 Pull Request
+# 职责：只做构建 + 检查，不做部署
+# ============================================================
+
+name: 🔍 CI Check
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============ 前端检查 ============
+  frontend:
+    name: 🎨 Frontend Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: medical-frontend
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: medical-frontend/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint
+        run: npm run lint
+
+      - name: 🏗️ Build
+        run: npm run build
+
+  # ============ 后端检查 ============
+  backend:
+    name: ⚙️ Backend Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: medical-backend
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 🏗️ Build & Test
+        run: mvn clean verify -pl medical-admin -am

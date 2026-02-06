@@ -1,0 +1,93 @@
+# ============================================================
+# 前端自动部署 — Vue 3 + Vite → 阿里云 ECS
+# ============================================================
+# 触发条件：push 到 main 分支且 medical-frontend/ 有变更
+#
+# ⚠️ 需要在 GitHub → Settings → Secrets and variables → Actions
+#    中配置以下 Secrets：
+#
+#   SERVER_HOST        — 服务器公网 IP（阿里云 ECS）
+#   SERVER_USER        — SSH 用户名（通常 root）
+#   SERVER_SSH_KEY     — SSH 私钥（完整 PEM 格式，对应服务器 authorized_keys）
+#   SERVER_PORT        — SSH 端口（默认 22，可选）
+# ============================================================
+
+name: 🎨 Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'medical-frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+  # 支持手动触发
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: medical-frontend
+
+    steps:
+      # ---- 1. 检出代码 ----
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ---- 2. 配置 Node.js ----
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: medical-frontend/package-lock.json
+
+      # ---- 3. 安装依赖 ----
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      # ---- 4. 代码检查 ----
+      - name: 🔍 Lint check
+        run: npm run lint
+        continue-on-error: true
+
+      # ---- 5. 构建生产包 ----
+      - name: 🏗️ Build production
+        run: npm run build
+
+      # ---- 6. 上传构建产物（可在 Actions 中下载排查） ----
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: medical-frontend/dist
+          retention-days: 7
+
+      # ---- 7. 部署到服务器 ----
+      - name: 🚀 Deploy to server via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete --exclude='.git'
+          path: medical-frontend/dist/
+          remote_path: /www/wwwroot/medical-frontend/dist/
+          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_user: ${{ secrets.SERVER_USER || 'root' }}
+          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+          remote_port: ${{ secrets.SERVER_PORT || 22 }}
+
+      # ---- 8. 重载 Nginx ----
+      - name: 🔄 Reload Nginx
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "🔄 Reloading Nginx..."
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "✅ Frontend deployed successfully!"

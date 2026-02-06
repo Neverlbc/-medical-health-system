@@ -1,0 +1,123 @@
+# ============================================================
+# 后端自动部署 — Spring Boot Maven → 阿里云 ECS
+# ============================================================
+# 触发条件：push 到 main 分支且 medical-backend/ 有变更
+#
+# ⚠️ 需要在 GitHub → Settings → Secrets and variables → Actions
+#    中配置以下 Secrets：
+#
+#   SERVER_HOST        — 服务器公网 IP（阿里云 ECS）
+#   SERVER_USER        — SSH 用户名（通常 root）
+#   SERVER_SSH_KEY     — SSH 私钥（完整 PEM 格式）
+#   SERVER_PORT        — SSH 端口（默认 22，可选）
+#   DB_PASSWORD        — 生产数据库密码（注入到启动命令）
+# ============================================================
+
+name: ⚙️ Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'medical-backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+  # 支持手动触发
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: medical-backend
+
+    steps:
+      # ---- 1. 检出代码 ----
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ---- 2. 配置 JDK 17 ----
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # ---- 3. Maven 构建（跳过测试加速部署） ----
+      - name: 🏗️ Build with Maven
+        run: mvn clean package -DskipTests -pl medical-admin -am
+
+      # ---- 4. 验证 JAR 包 ----
+      - name: ✅ Verify JAR artifact
+        run: |
+          JAR_PATH="medical-admin/target/medical-admin.jar"
+          if [ ! -f "$JAR_PATH" ]; then
+            echo "❌ JAR file not found: $JAR_PATH"
+            exit 1
+          fi
+          echo "✅ JAR size: $(du -h $JAR_PATH | cut -f1)"
+
+      # ---- 5. 上传构建产物 ----
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: medical-backend/medical-admin/target/medical-admin.jar
+          retention-days: 7
+
+      # ---- 6. 部署 JAR 到服务器 ----
+      - name: 📦 Upload JAR to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          source: medical-backend/medical-admin/target/medical-admin.jar
+          target: /www/wwwroot/medical-backend/
+          strip_components: 4  # 去掉 medical-backend/medical-admin/target/ 前缀
+
+      # ---- 7. 重启后端服务 ----
+      - name: 🔄 Restart backend service
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "🔄 Restarting medical backend service..."
+
+            # 备份旧 JAR（保留最近 3 个版本）
+            DEPLOY_DIR="/www/wwwroot/medical-backend"
+            BACKUP_DIR="$DEPLOY_DIR/backup"
+            mkdir -p "$BACKUP_DIR"
+
+            if [ -f "$DEPLOY_DIR/medical-admin.jar.running" ]; then
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              cp "$DEPLOY_DIR/medical-admin.jar.running" "$BACKUP_DIR/medical-admin_${TIMESTAMP}.jar"
+              # 只保留最近 3 个备份
+              ls -t "$BACKUP_DIR"/medical-admin_*.jar 2>/dev/null | tail -n +4 | xargs -r rm
+            fi
+
+            # 替换运行中的 JAR
+            cp "$DEPLOY_DIR/medical-admin.jar" "$DEPLOY_DIR/medical-admin.jar.running" 2>/dev/null || \
+            mv "$DEPLOY_DIR/medical-admin.jar" "$DEPLOY_DIR/medical-admin.jar.running"
+
+            # 重启 Systemd 服务
+            sudo systemctl restart medical
+            sleep 5
+
+            # 健康检查
+            if sudo systemctl is-active --quiet medical; then
+              echo "✅ Backend service is running!"
+              sudo systemctl status medical --no-pager -l | head -20
+            else
+              echo "❌ Backend service failed to start!"
+              sudo journalctl -u medical.service --no-pager -n 30
+              exit 1
+            fi
